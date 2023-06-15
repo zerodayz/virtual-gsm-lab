@@ -48,9 +48,10 @@
         state: absent
         name: gsm-flavor.medium
 
-    - name: Remove tmp directory for gsm-admin_key
-      file:
-        path: ./tmp/gsm
-        state: absent
-        recurse: yes
-        force: yes
+# For now do NOT delete the tmp directory.  It's useful.
+#    - name: Remove tmp directory
+#      file:
+#        path: ./tmp
+#        state: absent
+#        recurse: yes
+#        force: yes
