@@ -37,7 +37,7 @@
       become: false
 
     # Check if the flavor gsm-vlab with 25GB DISK and 4GB RAM already exists and create it if it doesn't.
-    - name: Create flavor
+    - name: Create flavor gsm-flavor.medium with 4GB RAM and 25GB disk
       os_nova_flavor:
         name: gsm-flavor.medium
         ram: 4096
@@ -47,7 +47,7 @@
         verify: "{{ ssl_verify }}"
 
     # Import the downloaded image into Glance if it doesn't exist.
-    - name: Import image
+    - name: Import gsm-image.ubuntu-22.04 into Glance
       os_image:
         name: gsm-image.ubuntu-22.04
         container_format: bare
@@ -58,13 +58,13 @@
 
 
     # Create private network, subnet, router, security group and security group rules if they don't exist.
-    - name: Create network
+    - name: Create network gsm-network.private
       os_network:
         name: gsm-network.private
         state: present
         verify: "{{ ssl_verify }}"
 
-    - name: Create subnet
+    - name: Create subnet gsm-subnet.private in network gsm-network.private
       os_subnet:
         name: gsm-subnet.private
         network_name: gsm-network.private
@@ -73,7 +73,7 @@
         verify: "{{ ssl_verify }}"
 
 
-    - name: Create router
+    - name: Create router gsm-router with interface in gsm-subnet.private
       os_router:
         name: gsm-router
         state: present
@@ -83,20 +83,14 @@
         verify: "{{ ssl_verify }}"
 
 
-    - name: Check if security group exists
-      os_security_group:
-          name: gsm-security-group
-          verify: "{{ ssl_verify }}"
-      register: security_group
-
-    - name: Create security group
+    - name: Create security group gsm-security-group
       os_security_group:
         name: gsm-security-group
         state: present
         verify: "{{ ssl_verify }}"
 
 
-    - name: Create security group rules
+    - name: Create security group rules for gsm-security-group
       os_security_group_rule:
         security_group: gsm-security-group
         protocol: "{{ item }}"
@@ -108,7 +102,7 @@
         - udp
 
     # Generate a keypair and upload it to OpenStack if it doesn't exist.
-    - name: Generate key
+    - name: Generate key gsm-admin_key
       openssh_keypair:
         path: ./tmp/gsm-admin_key
         type: rsa
@@ -116,14 +110,14 @@
         state: present
         force: no
 
-    - name: Upload key
+    - name: Upload key gsm-admin_key to OpenStack
       os_keypair:
         name: gsm_admin_key
         state: present
         public_key_file: ./tmp/gsm-admin_key.pub
         verify: "{{ ssl_verify }}"
 
-    - name: Create server
+    - name: Create BTS Server
       os_server:
         state: present
         name: BTS
