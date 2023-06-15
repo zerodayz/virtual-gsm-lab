@@ -137,6 +137,8 @@
         timeout: "200"
         flavor: m1.medium
         security_groups: gsm-security-group
-        nics: "net-name=gsm-network.private,net-name=provider-net"
+        nics:
+         - net-name: gsm-network.private
+         - net-name: provider-net
         verify: "{{ ssl_verify }}"
       loop: "{{ server_names }}"
