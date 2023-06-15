@@ -7,49 +7,50 @@
         state: absent
         name: BTS
 
-    - name: Delete keypair
+    - name: Delete keypair gsm_admin_key
       os_keypair:
         state: absent
         name: gsm_admin_key
 
-    - name: Delete security group rules
+    - name: Delete security group rules for gsm-security-group
       os_security_group_rule:
         state: absent
         security_group: gsm-security-group.management
 
-    - name: Delete security group
+    - name: Delete security group gsm-security-group
       os_security_group:
         state: absent
         name: gsm-security-group
 
-    - name: Delete router
+    - name: Delete router gsm-router
       os_router:
         state: absent
         name: gsm-router
 
-    - name: Delete subnet
+    - name: Delete subnet gsm-subnet.private
       os_subnet:
         state: absent
         name: gsm-subnet.private
 
-    - name: Delete network
+    - name: Delete network gsm-network.private
       os_network:
         state: absent
         name: gsm-network.private
 
-    - name: Delete image
-      os_image:
-        state: absent
-        name: gsm-image.ubuntu-22.04
+# For now do NOT delete the image from Glance.  It takes too long to upload. :-D
+#    - name: Delete image gsm-image.ubuntu-22.04
+#      os_image:
+#        state: absent
+#        name: gsm-image.ubuntu-22.04
 
-    - name: Delete flavor
+    - name: Delete flavor gsm-flavor.medium
       os_nova_flavor:
         state: absent
         name: gsm-flavor.medium
 
-    - name: Remove tmp directory
+    - name: Remove tmp directory for gsm-admin_key
       file:
-        path: /tmp/gsm
+        path: ./tmp/gsm
         state: absent
         recurse: yes
         force: yes
