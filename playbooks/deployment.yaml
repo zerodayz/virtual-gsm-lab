@@ -47,7 +47,7 @@
       become: false
 
     # Check if the flavor gsm-vlab with 25GB DISK and 4GB RAM already exists and create it if it doesn't.
-    - name: Create flavor gsm-flavor.medium with 4GB RAM and 25GB disk
+    - name: Create flavor m1.medium with 4GB RAM and 25GB disk
       os_nova_flavor:
         name: m1.medium
         ram: 4096
