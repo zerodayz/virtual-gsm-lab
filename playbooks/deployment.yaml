@@ -49,7 +49,7 @@
     # Check if the flavor gsm-vlab with 25GB DISK and 4GB RAM already exists and create it if it doesn't.
     - name: Create flavor gsm-flavor.medium with 4GB RAM and 25GB disk
       os_nova_flavor:
-        name: gsm-flavor.medium
+        name: m1.medium
         ram: 4096
         disk: 25
         vcpus: 1
@@ -135,9 +135,10 @@
         image: gsm-image.ubuntu-22.04
         key_name: gsm_admin_key
         timeout: "200"
-        flavor: gsm-flavor.medium
+        flavor: m1.medium
         security_groups: gsm-security-group
         network: gsm-network.private
+        nics: "net-name=gsm-network.private,net-name=provider-net"
         verify: "{{ ssl_verify }}"
       poll: 0
       async: 60
