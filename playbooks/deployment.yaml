@@ -126,18 +126,6 @@
         public_key_file: ./tmp/gsm-admin_key.pub
         verify: "{{ ssl_verify }}"
 
-    - name: Create BTS Server
-      os_server:
-        state: present
-        name: BTS
-        image: gsm-image.ubuntu-22.04
-        key_name: gsm_admin_key
-        timeout: "200"
-        flavor: gsm-flavor.medium
-        security_groups: gsm-security-group
-        network: gsm-network.private
-        verify: "{{ ssl_verify }}"
-
     - name: Create GSM Servers
       os_server:
         state: present
