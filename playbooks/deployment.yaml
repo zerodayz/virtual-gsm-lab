@@ -2,95 +2,112 @@
   hosts: localhost
   gather_facts: no
   tasks:
-    - name: Check if Ubuntu 22.04 image exists
+    # Create a tmp directory for our GSM deployment
+    - name: Create tmp directory
+      file:
+        path: /tmp/gsm
+        state: directory
+        mode: "0755"
+      become: false
+
+    # Check if the image is already downloaded in that directory
+    - name: Check if image exists
       stat:
-        path: /home/stack/jammy-server-cloudimg-amd64-disk-kvm.img
+        path: /tmp/gsm/jammy-server-cloudimg-amd64-disk-kvm.img
       register: image_stat
       become: false
 
+    # Verify md5sum of the image if the image exists
+    - stat:
+        path: /tmp/gsm/jammy-server-cloudimg-amd64-disk-kvm.img
+      register: image_sha1sum
+      when: image_stat.stat.exists == true
+      become: false
+
+    # Compare the md5sum to c5723c9290a0e88d8e5d5415c7d58b53 and download the image if it doesn't match
     - name: Download Ubuntu 22.04
       get_url:
         url: https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64-disk-kvm.img
-        dest: /home/stack/
+        dest: /tmp/gsm/
         mode: "0666"
       register: imagename
-      when: image_stat.stat.exists == false
+      when: image_stat.stat.exists == false or image_sha1sum.stat.checksum != "78dc58ba728ecaaf9abd5f91cea77ba40a9b7060"
+      become: false
 
-    - name: Create medium-sized flavor
+    # Check if the flavor gsm-vlab with 25GB DISK and 4GB RAM already exists and create it if it doesn't.
+    - name: Create flavor
       os_nova_flavor:
         name: gsm-flavor.medium
-        disk: 25
         ram: 4096
-        state: present
+        disk: 25
         vcpus: 1
-      when: not nova_flavors.stdout | from_yaml | selectattr('name', 'equalto', 'gsm-flavor.medium') | list
+        state: present
 
-    - name: Import Ubuntu 22.04 image
+    # Import the downloaded image into Glance if it doesn't exist.
+    - name: Import image
       os_image:
         name: gsm-image.ubuntu-22.04
         container_format: bare
         disk_format: qcow2
         state: present
-        filename: "{{imagename.dest}}"
-      when: not glance_images.stdout | from_yaml | selectattr('name', 'equalto', 'gsm-image.ubuntu-22.04') | list
+        filename: /tmp/gsm/jammy-server-cloudimg-amd64-disk-kvm.img
 
-    - name: Create private network
+
+    # Create private network, subnet, router, security group and security group rules if they don't exist.
+    - name: Create network
       os_network:
-        state: present
-        external: false
         name: gsm-network.private
-      when: not neutron_networks.stdout | from_yaml | selectattr('name', 'equalto', 'gsm-network.private') | list
+        state: present
 
-    - name: Create private subnet
+    - name: Create subnet
       os_subnet:
-        state: present
-        network_name: gsm-network.private
         name: gsm-subnet.private
-        gateway_ip: 172.20.1.254
+        network_name: gsm-network.private
         cidr: 172.20.1.0/24
-      when: not neutron_subnets.stdout | from_yaml | selectattr('name', 'equalto', 'gsm-subnet.private') | list
-
-    - name: Create router for gsm-network.private and public
-      os_router:
         state: present
-        name: router
+
+    - name: Create router
+      os_router:
+        name: gsm-router
+        state: present
         network: public
         interfaces:
-          - gsm-subnet.private
-      when: not neutron_routers.stdout | from_yaml | selectattr('name', 'equalto', 'router') | list
+         - gsm-subnet.private
 
-    - name: Create SG
+    - name: Check if security group exists
       os_security_group:
-        state: present
-        name: gsm-security-group.management
-      when: not nova_security_groups.stdout | from_yaml | selectattr('name', 'equalto', 'gsm-security-group.management') | list
+          name: gsm-security-group
+      register: security_group
 
-    - name: Create SG rules
+    - name: Create security group
+      os_security_group:
+        name: gsm-security-group
+        state: present
+
+    - name: Create security group rules
       os_security_group_rule:
-        security_group: gsm-security-group.management
+        security_group: gsm-security-group
         protocol: "{{ item }}"
         remote_ip_prefix: 0.0.0.0/0
       loop:
         - tcp
         - icmp
         - udp
-      when: not nova_security_group_rules.stdout | from_yaml | selectattr('security_group', 'equalto', 'gsm-security-group.management') | list
 
+    # Generate a keypair and upload it to OpenStack if it doesn't exist.
     - name: Generate key
       openssh_keypair:
-        path: /home/stack/gsm-admin_key
+        path: /tmp/gsm/gsm-admin_key
         type: rsa
         size: 4096
         state: present
         force: no
-      when: not file_gsm_admin_key.stat.exists
 
     - name: Upload key
       os_keypair:
         name: gsm_admin_key
         state: present
-        public_key_file: /home/stack/gsm-admin_key.pub
-      when: not nova_keypairs.stdout | from_yaml | selectattr('name', 'equalto', 'gsm_admin_key') | list
+        public_key_file : /tmp/gsm/gsm-admin_key.pub
 
     - name: Create server
       os_server:
@@ -100,6 +117,5 @@
         key_name: gsm_admin_key
         timeout: "200"
         flavor: gsm-flavor.medium
-        security_groups: gsm-security-group.management
+        security_groups: gsm-security-group
         network: gsm-network.private
-      when: not nova_servers.stdout | from_yaml | selectattr('name', 'equalto', 'BTS') | list
