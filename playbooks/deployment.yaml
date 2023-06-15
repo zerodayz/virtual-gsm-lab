@@ -137,5 +137,5 @@
         security_groups: gsm-security-group
         network: gsm-network.private
         verify: "{{ ssl_verify }}"
-        poll: 0
+      poll: 0
       loop: "{{ server_names }}"
