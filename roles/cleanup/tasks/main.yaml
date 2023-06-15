@@ -1,0 +1,53 @@
+- name: Virtual GSM Lab Cleanup
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Remove server
+      os_server:
+        state: absent
+        name: BTS
+
+    - name: Delete keypair
+      os_keypair:
+        name: gsm_admin_key
+        state: absent
+
+    - name: Delete security group rules
+      os_security_group_rule:
+        security_group: gsm-security-group.management
+        state: absent
+
+    - name: Delete security group
+      os_security_group:
+        name: gsm-security-group.management
+        state: absent
+
+    - name: Delete router
+      os_router:
+        name: router
+        state: absent
+
+    - name: Delete private subnet
+      os_subnet:
+        name: gsm-subnet.private
+        state: absent
+
+    - name: Delete private network
+      os_network:
+        name: gsm-network.private
+        state: absent
+
+    - name: Delete image
+      os_image:
+        name: gsm-image.ubuntu-22.04
+        state: absent
+
+    - name: Delete flavor
+      os_nova_flavor:
+        name: gsm-flavor.medium
+        state: absent
+
+    - name: Delete file
+      file:
+        path: /home/stack/jammy-server-cloudimg-amd64-disk-kvm.img
+        state: absent

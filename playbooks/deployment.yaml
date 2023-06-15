@@ -1,0 +1,105 @@
+- name: Virtual GSM Lab Deployment
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Check if Ubuntu 22.04 image exists
+      stat:
+        path: /home/stack/jammy-server-cloudimg-amd64-disk-kvm.img
+      register: image_stat
+      become: false
+
+    - name: Download Ubuntu 22.04
+      get_url:
+        url: https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64-disk-kvm.img
+        dest: /home/stack/
+        mode: "0666"
+      register: imagename
+      when: image_stat.stat.exists == false
+
+    - name: Create medium-sized flavor
+      os_nova_flavor:
+        name: gsm-flavor.medium
+        disk: 25
+        ram: 4096
+        state: present
+        vcpus: 1
+      when: not nova_flavors.stdout | from_yaml | selectattr('name', 'equalto', 'gsm-flavor.medium') | list
+
+    - name: Import Ubuntu 22.04 image
+      os_image:
+        name: gsm-image.ubuntu-22.04
+        container_format: bare
+        disk_format: qcow2
+        state: present
+        filename: "{{imagename.dest}}"
+      when: not glance_images.stdout | from_yaml | selectattr('name', 'equalto', 'gsm-image.ubuntu-22.04') | list
+
+    - name: Create private network
+      os_network:
+        state: present
+        external: false
+        name: gsm-network.private
+      when: not neutron_networks.stdout | from_yaml | selectattr('name', 'equalto', 'gsm-network.private') | list
+
+    - name: Create private subnet
+      os_subnet:
+        state: present
+        network_name: gsm-network.private
+        name: gsm-subnet.private
+        gateway_ip: 172.20.1.254
+        cidr: 172.20.1.0/24
+      when: not neutron_subnets.stdout | from_yaml | selectattr('name', 'equalto', 'gsm-subnet.private') | list
+
+    - name: Create router for gsm-network.private and public
+      os_router:
+        state: present
+        name: router
+        network: public
+        interfaces:
+          - gsm-subnet.private
+      when: not neutron_routers.stdout | from_yaml | selectattr('name', 'equalto', 'router') | list
+
+    - name: Create SG
+      os_security_group:
+        state: present
+        name: gsm-security-group.management
+      when: not nova_security_groups.stdout | from_yaml | selectattr('name', 'equalto', 'gsm-security-group.management') | list
+
+    - name: Create SG rules
+      os_security_group_rule:
+        security_group: gsm-security-group.management
+        protocol: "{{ item }}"
+        remote_ip_prefix: 0.0.0.0/0
+      loop:
+        - tcp
+        - icmp
+        - udp
+      when: not nova_security_group_rules.stdout | from_yaml | selectattr('security_group', 'equalto', 'gsm-security-group.management') | list
+
+    - name: Generate key
+      openssh_keypair:
+        path: /home/stack/gsm-admin_key
+        type: rsa
+        size: 4096
+        state: present
+        force: no
+      when: not file_gsm_admin_key.stat.exists
+
+    - name: Upload key
+      os_keypair:
+        name: gsm_admin_key
+        state: present
+        public_key_file: /home/stack/gsm-admin_key.pub
+      when: not nova_keypairs.stdout | from_yaml | selectattr('name', 'equalto', 'gsm_admin_key') | list
+
+    - name: Create server
+      os_server:
+        state: present
+        name: BTS
+        image: gsm-image.ubuntu-22.04
+        key_name: gsm_admin_key
+        timeout: "200"
+        flavor: gsm-flavor.medium
+        security_groups: gsm-security-group.management
+        network: gsm-network.private
+      when: not nova_servers.stdout | from_yaml | selectattr('name', 'equalto', 'BTS') | list

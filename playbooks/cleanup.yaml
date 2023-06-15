@@ -1,0 +1,5 @@
+- name: Virtual GSM Lab Cleanup
+  hosts: localhost
+  gather_facts: no
+  roles:
+    - cleanup
