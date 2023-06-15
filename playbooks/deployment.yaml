@@ -77,7 +77,8 @@
       os_router:
         name: gsm-router
         state: present
-        network: public
+        # For external
+        # network: public
         interfaces:
          - gsm-subnet.private
         verify: "{{ ssl_verify }}"
