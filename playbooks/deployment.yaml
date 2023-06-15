@@ -5,7 +5,7 @@
     # Create a tmp directory for our GSM deployment
     - name: Create tmp directory
       file:
-        path: /tmp/gsm
+        path: ./tmp
         state: directory
         mode: "0755"
       become: false
@@ -13,13 +13,13 @@
     # Check if the image is already downloaded in that directory
     - name: Check if image exists
       stat:
-        path: /tmp/gsm/jammy-server-cloudimg-amd64-disk-kvm.img
+        path: ./tmp/jammy-server-cloudimg-amd64-disk-kvm.img
       register: image_stat
       become: false
 
     # Verify md5sum of the image if the image exists
     - stat:
-        path: /tmp/gsm/jammy-server-cloudimg-amd64-disk-kvm.img
+        path: ./tmp/jammy-server-cloudimg-amd64-disk-kvm.img
       register: image_sha1sum
       when: image_stat.stat.exists == true
       become: false
@@ -28,7 +28,7 @@
     - name: Download Ubuntu 22.04
       get_url:
         url: https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64-disk-kvm.img
-        dest: /tmp/gsm/
+        dest: ./tmp/
         mode: "0666"
       register: imagename
       when: image_stat.stat.exists == false or image_sha1sum.stat.checksum != "78dc58ba728ecaaf9abd5f91cea77ba40a9b7060"
@@ -50,7 +50,7 @@
         container_format: bare
         disk_format: qcow2
         state: present
-        filename: /tmp/gsm/jammy-server-cloudimg-amd64-disk-kvm.img
+        filename: ./tmp/jammy-server-cloudimg-amd64-disk-kvm.img
 
 
     # Create private network, subnet, router, security group and security group rules if they don't exist.
@@ -97,7 +97,7 @@
     # Generate a keypair and upload it to OpenStack if it doesn't exist.
     - name: Generate key
       openssh_keypair:
-        path: /tmp/gsm/gsm-admin_key
+        path: ./tmp/gsm-admin_key
         type: rsa
         size: 4096
         state: present
@@ -107,7 +107,7 @@
       os_keypair:
         name: gsm_admin_key
         state: present
-        public_key_file: /tmp/gsm/gsm-admin_key.pub
+        public_key_file: ./tmp/gsm-admin_key.pub
 
     - name: Create server
       os_server:
