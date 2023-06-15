@@ -107,7 +107,7 @@
       os_keypair:
         name: gsm_admin_key
         state: present
-        public_key_file : /tmp/gsm/gsm-admin_key.pub
+        public_key_file: /tmp/gsm/gsm-admin_key.pub
 
     - name: Create server
       os_server:
