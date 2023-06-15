@@ -137,7 +137,6 @@
         timeout: "200"
         flavor: m1.medium
         security_groups: gsm-security-group
-        network: gsm-network.private
         nics: "net-name=gsm-network.private,net-name=provider-net"
         verify: "{{ ssl_verify }}"
       poll: 0
