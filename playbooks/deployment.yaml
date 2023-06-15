@@ -11,6 +11,8 @@
       - MGW4MSC
       - HLR
       - STP
+      - MS1
+      - MS2
   tasks:
     # Create a tmp directory for our GSM deployment
     - name: Create tmp directory
