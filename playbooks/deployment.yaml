@@ -138,4 +138,5 @@
         network: gsm-network.private
         verify: "{{ ssl_verify }}"
       poll: 0
+      async: 60
       loop: "{{ server_names }}"
