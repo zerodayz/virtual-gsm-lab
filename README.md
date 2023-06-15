@@ -4,10 +4,10 @@ The purpose of this project is to provide a virtual GSM lab on top of OpenStack.
 
 ## Deploy with Ansible
 ```
-ansible-playbook playbooks/deployment.yml
+ansible-playbook playbooks/deployment.yaml
 ```
 
 ## Cleanup
 ```
-ansible-playbook playbooks/cleanup.yml
+ansible-playbook playbooks/cleanup.yaml
 ```
