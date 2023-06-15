@@ -1,6 +1,8 @@
 - name: Virtual GSM Lab Deployment
   hosts: localhost
   gather_facts: no
+  vars:
+    ssl_verify: false
   tasks:
     # Create a tmp directory for our GSM deployment
     - name: Create tmp directory
@@ -42,6 +44,7 @@
         disk: 25
         vcpus: 1
         state: present
+        verify: {{ ssl_verify }}
 
     # Import the downloaded image into Glance if it doesn't exist.
     - name: Import image
@@ -51,6 +54,7 @@
         disk_format: qcow2
         state: present
         filename: ./tmp/jammy-server-cloudimg-amd64-disk-kvm.img
+        verify: {{ ssl_verify }}
 
 
     # Create private network, subnet, router, security group and security group rules if they don't exist.
@@ -58,6 +62,7 @@
       os_network:
         name: gsm-network.private
         state: present
+        verify: {{ ssl_verify }}
 
     - name: Create subnet
       os_subnet:
@@ -65,6 +70,8 @@
         network_name: gsm-network.private
         cidr: 172.20.1.0/24
         state: present
+        verify: {{ ssl_verify }}
+
 
     - name: Create router
       os_router:
@@ -73,22 +80,28 @@
         network: public
         interfaces:
          - gsm-subnet.private
+        verify: {{ ssl_verify }}
+
 
     - name: Check if security group exists
       os_security_group:
           name: gsm-security-group
+          verify: {{ ssl_verify }}
       register: security_group
 
     - name: Create security group
       os_security_group:
         name: gsm-security-group
         state: present
+        verify: {{ ssl_verify }}
+
 
     - name: Create security group rules
       os_security_group_rule:
         security_group: gsm-security-group
         protocol: "{{ item }}"
         remote_ip_prefix: 0.0.0.0/0
+        verify: {{ ssl_verify }}
       loop:
         - tcp
         - icmp
@@ -108,6 +121,7 @@
         name: gsm_admin_key
         state: present
         public_key_file: ./tmp/gsm-admin_key.pub
+        verify: {{ ssl_verify }}
 
     - name: Create server
       os_server:
@@ -119,3 +133,4 @@
         flavor: gsm-flavor.medium
         security_groups: gsm-security-group
         network: gsm-network.private
+        verify: {{ ssl_verify }}
