@@ -3,6 +3,14 @@
   gather_facts: no
   vars:
     ssl_verify: false
+    server_names:
+      - BTS
+      - BSC
+      - MSC
+      - MGW4BSC
+      - MGW4MSC
+      - HLR
+      - STP
   tasks:
     # Create a tmp directory for our GSM deployment
     - name: Create tmp directory
@@ -129,3 +137,16 @@
         security_groups: gsm-security-group
         network: gsm-network.private
         verify: "{{ ssl_verify }}"
+
+    - name: Create GSM Servers
+      os_server:
+        state: present
+        name: "{{ item }}"
+        image: gsm-image.ubuntu-22.04
+        key_name: gsm_admin_key
+        timeout: "200"
+        flavor: gsm-flavor.medium
+        security_groups: gsm-security-group
+        network: gsm-network.private
+        verify: "{{ ssl_verify }}"
+      loop: "{{ server_names }}"
