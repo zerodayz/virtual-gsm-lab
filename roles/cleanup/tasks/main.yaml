@@ -1,11 +1,24 @@
 - name: Cleanup Virtual GSM Lab Deployment
   hosts: localhost
   gather_facts: no
+  vars:
+    ssl_verify: false
+    server_names:
+      - BTS
+      - BSC
+      - MSC
+      - MGW4BSC
+      - MGW4MSC
+      - HLR
+      - STP
+      - MS1
+      - MS2
   tasks:
     - name: Delete server
       os_server:
         state: absent
-        name: BTS
+        name: "{{ item }}"
+      loop: "{{ server_names }}"
 
     - name: Delete keypair gsm_admin_key
       os_keypair:
@@ -37,21 +50,19 @@
         state: absent
         name: gsm-network.private
 
-# For now do NOT delete the image from Glance.  It takes too long to upload. :-D
-#    - name: Delete image gsm-image.ubuntu-22.04
-#      os_image:
-#        state: absent
-#        name: gsm-image.ubuntu-22.04
+    - name: Delete image gsm-image.ubuntu-22.04
+      os_image:
+        state: absent
+        name: gsm-image.ubuntu-22.04
 
-    - name: Delete flavor gsm-flavor.medium
+    - name: Delete flavor m1.medium
       os_nova_flavor:
         state: absent
-        name: gsm-flavor.medium
+        name: m1.medium
 
-# For now do NOT delete the tmp directory.  It's useful.
-#    - name: Remove tmp directory
-#      file:
-#        path: ./tmp
-#        state: absent
-#        recurse: yes
-#        force: yes
+    - name: Remove tmp directory
+      file:
+        path: ./tmp
+        state: absent
+        recurse: yes
+        force: yes

@@ -111,6 +111,7 @@
         - tcp
         - icmp
         - udp
+        - sctp
 
     # Generate a keypair and upload it to OpenStack if it doesn't exist.
     - name: Generate key gsm-admin_key
